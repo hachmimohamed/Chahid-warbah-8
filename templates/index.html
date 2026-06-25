@@ -1,1 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Chahid Warbah 7</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* (VOTRE CSS ORIGINAL INCHANGÉ) */
+        :root { --gold: #f39c12; --bg: #000; --card: #1e1e1e; --red: #e74c3c; --blue: #3498db; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; text-align: center; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        #score { font-size: 50px; font-weight: bold; color: var(--gold); margin: 25px 0; }
+        .page { display: none; flex-grow: 1; padding: 20px; overflow-y: auto; padding-bottom: 80px; }
+        .page.active { display: block; }
+        #coin { width: 200px; cursor: pointer; transition: 0.1s; -webkit-tap-highlight-color: transparent; margin-top: 40px; }
+        #coin:active { transform: scale(0.95); }
+        .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; text-align: left; }
+        .btn-action { background: var(--gold); border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; color: black; cursor: pointer; }
+        .navbar { background: #111; display: flex; justify-content: space-around; padding: 15px 0; position: fixed; bottom: 0; width: 100%; border-top: 1px solid #333; }
+        .nav-item { background: none; border: none; color: #777; font-weight: bold; font-size: 14px; cursor: pointer; }
+        .nav-item.active { color: var(--gold); }
+        #shop-float { position: fixed; bottom: 85px; right: 20px; width: 60px; height: 60px; background: var(--red); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 25px; z-index: 99; cursor: pointer; border: 2px solid white; }
+        #shop-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        .shop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-close { background: none; border: none; color: white; font-size: 30px; cursor: pointer; }
+        .shop-card { background: var(--card); border: 1px solid #333; border-radius: 15px; padding: 15px; margin-bottom: 15px; text-align: center; }
+        .shop-price { color: var(--gold); font-weight: bold; font-size: 18px; display: block; margin: 10px 0; }
+        .input-shop { width: 90%; padding: 10px; border-radius: 8px; border: none; margin-bottom: 10px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div id="score">0</div> <div id="shop-float" onclick="toggleShop(true)">🛒</div>
+    
+    <div id="tap-page" class="page active">
+        <img id="coin" src="https://cdn-icons-png.flaticon.com/512/2933/2933116.png" onclick="handleTap()">
+    </div>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        // Détection auto de l'utilisateur
+        let userUid;
+        const tgId = tg.initDataUnsafe?.user?.id;
+        if (tgId) {
+            userUid = "tg_" + tgId;
+        } else {
+            userUid = localStorage.getItem("user_email") || prompt("Entrez votre email pour continuer :");
+            localStorage.setItem("user_email", userUid);
+        }
+
+        function handleTap() {
+            let scoreEl = document.getElementById('score');
+            let payload = { taps: 1 };
+            
+            // Envoi selon le type
+            if (userUid.startsWith('tg_')) {
+                payload.telegram_id = userUid;
+            } else {
+                payload.email = userUid;
+            }
+
+            fetch('/api/tap', { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify(payload) 
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.new_score !== undefined) scoreEl.innerText = data.new_score;
+            });
+        }
+        // ... (Gardez le reste des fonctions JS originales) ...
+    </script>
+</body>
+</html>
 
