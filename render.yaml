@@ -1,0 +1,17 @@
+# Exported from Render on 2026-06-25T04:07:36Z
+version: "1"
+services:
+- type: web
+  name: Chahid-warbah-8
+  runtime: python
+  repo: https://github.com/hachmimohamed/Chahid-warbah-8
+  plan: free
+  envVars:
+  - key: Linkjust
+    sync: false
+  - key: EXE_API_TOKEN
+    sync: false
+  region: oregon
+  buildCommand: pip install -r requirements.txt
+  startCommand: gunicorn main:app
+  autoDeployTrigger: commit
