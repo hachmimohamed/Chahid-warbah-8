@@ -1,1 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mon App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; text-align: center; }
+        .page { display: none; }
+        .page.active { display: block; }
+        .card { background: white; padding: 15px; margin: 10px 0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-action { background: #0088cc; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); }
+        .nav-item { cursor: pointer; padding: 10px; }
+        .nav-item.active { color: #0088cc; font-weight: bold; }
+        #shop-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:1000; padding: 20px; }
+    </style>
+</head>
+<body>
+
+    <!-- Page Accueil -->
+    <div id="home-page" class="page active">
+        <h1>Score : <span id="score">0</span></h1>
+        <button class="btn-action" onclick="handleTap()">TAP !</button>
+        <br><br>
+        <button onclick="toggleShop(true)">Ouvrir Boutique</button>
+    </div>
+
+    <!-- Page Missions -->
+    <div id="tasks-page" class="page">
+        <h2>Missions</h2>
+        <div id="missions-container"></div>
+    </div>
+
+    <!-- Boutique -->
+    <div id="shop-overlay">
+        <h2>Boutique</h2>
+        <button onclick="toggleShop(false)">Fermer</button>
+    </div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-item active" onclick="show('home-page', this)">Accueil</div>
+        <div class="nav-item" onclick="show('tasks-page', this)">Missions</div>
+    </nav>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        const urlParams = new URLSearchParams(window.location.search);
+        const uid = String(tg.initDataUnsafe?.user?.id || urlParams.get('user_id') || "6046697939");
+
+        async function handleTap() {
+            let scoreEl = document.getElementById('score');
+            try {
+                const response = await fetch('/api/tap', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({ telegram_id: uid, taps: 1 }) 
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    scoreEl.innerText = data.new_score; 
+                }
+            } catch (error) {
+                console.error("Erreur de sauvegarde:", error);
+            }
+        }
+
+        function initMissions() {
+            const container = document.getElementById('missions-container');
+            container.innerHTML = "";
+            const missions = [
+                { id: 1, type: 'linkjust', name: 'Mission Linkjust 1' },
+                { id: 2, type: 'linkjust', name: 'Mission Linkjust 2' },
+                { id: 3, type: 'exe', name: 'Mission Exe.io 1' },
+                { id: 4, type: 'exe', name: 'Mission Exe.io 2' },
+                { id: 5, type: 'binance', name: 'Parrainage Binance' },
+                { id: 6, type: 'bybit', name: 'Parrainage Bybit' }
+            ];
+            missions.forEach(m => {
+                let card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `<div>🚀 <b>${m.name}</b></div><button class="btn-action" onclick="lancerMission('${m.type}', ${m.id})">GO</button>`;
+                container.appendChild(card);
+            });
+        }
+
+        function lancerMission(type, id) {
+            if(type === 'linkjust' || type === 'exe') {
+                fetch('/api/get_short_link', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: uid, mission_type: type })
+                }).then(r => r.json()).then(data => {
+                    tg.openLink(data.short_url);
+                    setTimeout(() => validerMission(id), 10000);
+                });
+            } else {
+                let lien = (type === 'binance') ? "https://www.binance.com/activity/referral-entry/CPA?ref=CPA_00OODVF08F" : "https://www.bybit.com/invite?ref=EV3EWKR&medium=referral&utm_campaign=evergreen";
+                tg.openLink(lien);
+                setTimeout(() => validerMission(id), 5000);
+            }
+        }
+
+        function validerMission(id) {
+            fetch('/api/complete_mission', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ user_id: uid, mission_id: id })
+            }).then(() => { alert("Mission validée !"); location.reload(); });
+        }
+
+        function toggleShop(open) { document.getElementById('shop-overlay').style.display = open ? 'block' : 'none'; }
+        
+        function show(id, btn) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
+            if(id === 'tasks-page') initMissions();
+        }
+    </script>
+</body>
+          </html>
 
