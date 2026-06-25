@@ -1,25 +1,45 @@
-import telebot
 import os
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
-from dotenv import load_dotenv
+import threading
+from flask import Flask
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
-load_dotenv()
+# 1. Configuration du serveur Web (Obligatoire pour Render)
+app = Flask(__name__)
 
-# Utilisation des variables d'environnement
-bot = telebot.TeleBot(os.getenv("BOT_API_TOKEN"))
-WEBAPP_URL = os.getenv("WEBAPP_URL") # URL de ton hébergeur (https://chahid-warbah-8.onrender.com)
+@app.route('/')
+def home():
+    return "Le bot est en ligne !"
 
-@bot.message_handler(commands=['start'])
-def send_welcome(message):
-    user_id = message.from_user.id
-    url_avec_id = f"{WEBAPP_URL}?user_id={user_id}"
+def run_flask():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
+
+# 2. Votre logique Telegram
+def start(update, context):
+    update.message.reply_text("Bonjour ! Le bot est actif.")
+
+def main():
+    # Récupération du token depuis les variables d'environnement Render
+    token = os.getenv("EXE_API_TOKEN")
     
-    markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton(
-        text="🚀 Lancer Chahid Warbah 7", 
-        web_app=WebAppInfo(url=url_avec_id)
-    ))
-    bot.send_message(message.chat.id, "Bienvenue ! Clique pour jouer 👇", reply_markup=markup)
+    if not token:
+        print("Erreur : Le token EXE_API_TOKEN n'est pas défini.")
+        return
 
-if __name__ == '__main__':
-    bot.polling()
+    updater = Updater(token, use_context=True)
+    dp = updater.dispatcher
+
+    # Vos commandes
+    dp.add_handler(CommandHandler("start", start))
+
+    # Démarrage du bot
+    print("Bot démarré...")
+    updater.start_polling()
+    updater.idle()
+
+# 3. Exécution simultanée
+if __name__ == "__main__":
+    # Lance le serveur Web dans un thread séparé
+    threading.Thread(target=run_flask).start()
+    # Lance le bot
+    main()
