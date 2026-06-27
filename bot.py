@@ -14,4 +14,3 @@ def run_flask():
 
 if __name__ == "__main__":
     threading.Thread(target=run_flask).start()
-    # Mettez ici votre code de démarrage du bot Telegram (ex: updater.start_polling())
