@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Chahid Warbah</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root { --gold: #f39c12; --bg: #000; --card: #1e1e1e; --red: #e74c3c; }
+        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; text-align: center; height: 100vh; display: flex; flex-direction: column; }
+        #score { font-size: 50px; font-weight: bold; color: var(--gold); margin: 20px 0; }
+        .page { display: none; flex-grow: 1; padding: 20px; overflow-y: auto; padding-bottom: 100px; }
+        .page.active { display: block; }
+        #coin { width: 200px; cursor: pointer; margin-top: 20px; }
+        .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .navbar { background: #111; display: flex; justify-content: space-around; padding: 15px 0; position: fixed; bottom: 0; width: 100%; border-top: 1px solid #333; }
+        .nav-item { background: none; border: none; color: #777; font-weight: bold; cursor: pointer; }
+        .nav-item.active { color: var(--gold); }
+    </style>
+</head>
+<body>
+    <div id="score">0</div>
+    <div id="tap-page" class="page active">
+        <img id="coin" src="https://cdn-icons-png.flaticon.com/512/2933/2933116.png" onclick="handleTap()">
+    </div>
+    <div id="mining-page" class="page">
+        <div class="card"><div>🖥️ Mineur</div><button>10k</button></div>
+    </div>
+    <div id="tasks-page" class="page">
+        <div class="card"><div>✅ Follow Telegram</div><button>OK</button></div>
+    </div>
+    <nav class="navbar">
+        <button class="nav-item active" onclick="show('tap-page', this)">TAP</button>
+        <button class="nav-item" onclick="show('mining-page', this)">MINING</button>
+        <button class="nav-item" onclick="show('tasks-page', this)">MISSIONS</button>
+    </nav>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        const uid = String(tg.initDataUnsafe?.user?.id || "6046697939");
+
+        // Charger le score au démarrage
+        fetch('/api/score?telegram_id=' + uid)
+        .then(r => r.json()).then(data => { document.getElementById('score').innerText = data.score; });
+
+        function handleTap() {
+            fetch('/api/tap', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegram_id: uid }) })
+            .then(r => r.json()).then(data => { if(data.new_score) document.getElementById('score').innerText = data.new_score; });
+        }
+        function show(id, btn) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
+        }
+    </script>
+</body>
+</html>
