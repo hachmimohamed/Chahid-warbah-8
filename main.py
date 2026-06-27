@@ -4,10 +4,33 @@ from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
+# Utilisez l'URL interne de la base de données Render que vous avez copiée
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def get_db_connection():
+    # La connexion nécessite sslmode='require' pour les bases Render/Supabase
     return psycopg2.connect(DATABASE_URL, sslmode='require')
+
+# Fonction pour initialiser la table automatiquement au démarrage
+def init_db():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id VARCHAR(255) PRIMARY KEY,
+                points INTEGER DEFAULT 0
+            );
+        """)
+        conn.commit()
+        cur.close()
+        conn.close()
+        print("Base de données initialisée avec succès.")
+    except Exception as e:
+        print(f"Erreur lors de l'initialisation de la DB : {e}")
+
+# Appel de l'initialisation au démarrage
+init_db()
 
 @app.route('/')
 def index():
@@ -25,8 +48,8 @@ def get_score():
         cur.close()
         conn.close()
         return jsonify({"score": score})
-    except:
-        return jsonify({"score": 0})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/tap', methods=['POST'])
 def tap():
@@ -35,10 +58,13 @@ def tap():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
+        # Incrémenter ou insérer l'utilisateur
         cur.execute("UPDATE users SET points = points + 1 WHERE id = %s", (uid,))
         if cur.rowcount == 0:
             cur.execute("INSERT INTO users (id, points) VALUES (%s, 1)", (uid, 1))
         conn.commit()
+        
+        # Récupérer le nouveau score
         cur.execute("SELECT points FROM users WHERE id = %s", (uid,))
         new_score = cur.fetchone()[0]
         cur.close()
