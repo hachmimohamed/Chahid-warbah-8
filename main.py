@@ -4,11 +4,11 @@ from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
-# Utilisez l'URL interne de la base de données Render que vous avez copiée
+# Assurez-vous que cette variable est réglée sur votre "Internal Database URL" dans Render
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def get_db_connection():
-    # La connexion nécessite sslmode='require' pour les bases Render/Supabase
+    # La connexion nécessite sslmode='require' pour les bases Render
     return psycopg2.connect(DATABASE_URL, sslmode='require')
 
 # Fonction pour initialiser la table automatiquement au démarrage
@@ -49,7 +49,7 @@ def get_score():
         conn.close()
         return jsonify({"score": score})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"score": 0, "debug": str(e)})
 
 @app.route('/api/tap', methods=['POST'])
 def tap():
@@ -71,6 +71,7 @@ def tap():
         conn.close()
         return jsonify({"new_score": new_score})
     except Exception as e:
+        # Retourne l'erreur pour pouvoir la lire dans les logs Render
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
