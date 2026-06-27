@@ -20,35 +20,66 @@
 </head>
 <body>
     <div id="score">0</div>
+    
     <div id="tap-page" class="page active">
         <img id="coin" src="https://cdn-icons-png.flaticon.com/512/2933/2933116.png" onclick="handleTap()">
     </div>
+    
     <div id="mining-page" class="page">
         <div class="card"><div>🖥️ Mineur</div><button>10k</button></div>
     </div>
+    
     <div id="tasks-page" class="page">
-        <div class="card"><div>✅ Follow Telegram</div><button id="task-btn" onclick="completeTask()">OK</button></div>
+        <div class="card">
+            <div>Binance</div>
+            <a href="#" target="_blank" onclick="completeTask('btn1', 600)">
+                <button id="btn1">OK</button>
+            </a>
+        </div>
+        <div class="card">
+            <div>Bybit</div>
+            <a href="#" target="_blank" onclick="completeTask('btn2', 600)">
+                <button id="btn2">OK</button>
+            </a>
+        </div>
+        <div class="card">
+            <div>Linkjust</div>
+            <a href="#" target="_blank" onclick="completeTask('btn3', 600)">
+                <button id="btn3">OK</button>
+            </a>
+        </div>
+        <div class="card">
+            <div>Exe.io</div>
+            <a href="#" target="_blank" onclick="completeTask('btn4', 600)">
+                <button id="btn4">OK</button>
+            </a>
+        </div>
     </div>
+
     <nav class="navbar">
         <button class="nav-item active" onclick="show('tap-page', this)">TAP</button>
         <button class="nav-item" onclick="show('mining-page', this)">MINING</button>
         <button class="nav-item" onclick="show('tasks-page', this)">MISSIONS</button>
     </nav>
+
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
         const uid = String(tg.initDataUnsafe?.user?.id || "6046697939");
 
+        // Charger le score initial
         fetch('/api/score?telegram_id=' + uid)
         .then(r => r.json()).then(data => { document.getElementById('score').innerText = data.score; });
 
+        // Fonction pour le clic normal
         function handleTap() {
             fetch('/api/tap', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegram_id: uid }) })
             .then(r => r.json()).then(data => { if(data.new_score !== undefined) document.getElementById('score').innerText = data.new_score; });
         }
 
-        function completeTask() {
-            const btn = document.getElementById('task-btn');
+        // Fonction pour valider une mission
+        function completeTask(btnId, bonus) {
+            const btn = document.getElementById(btnId);
             btn.innerText = "DONE";
             btn.disabled = true;
             btn.style.background = "green";
@@ -56,15 +87,14 @@
             fetch('/api/tap', { 
                 method: 'POST', 
                 headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ telegram_id: uid, bonus: 600 }) 
+                body: JSON.stringify({ telegram_id: uid, bonus: bonus }) 
             })
             .then(r => r.json()).then(data => { 
-                if(data.new_score !== undefined) {
-                    document.getElementById('score').innerText = data.new_score; 
-                }
+                if(data.new_score !== undefined) document.getElementById('score').innerText = data.new_score; 
             });
         }
 
+        // Gestion de la navigation
         function show(id, btn) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
