@@ -27,7 +27,7 @@
         <div class="card"><div>🖥️ Mineur</div><button>10k</button></div>
     </div>
     <div id="tasks-page" class="page">
-        <div class="card"><div>✅ Follow Telegram</div><button>OK</button></div>
+        <div class="card"><div>✅ Follow Telegram</div><button id="task-btn" onclick="completeTask()">OK</button></div>
     </div>
     <nav class="navbar">
         <button class="nav-item active" onclick="show('tap-page', this)">TAP</button>
@@ -39,14 +39,30 @@
         tg.expand();
         const uid = String(tg.initDataUnsafe?.user?.id || "6046697939");
 
-        // Charger le score au démarrage
         fetch('/api/score?telegram_id=' + uid)
         .then(r => r.json()).then(data => { document.getElementById('score').innerText = data.score; });
 
         function handleTap() {
             fetch('/api/tap', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegram_id: uid }) })
-            .then(r => r.json()).then(data => { if(data.new_score) document.getElementById('score').innerText = data.new_score; });
+            .then(r => r.json()).then(data => { if(data.new_score !== undefined) document.getElementById('score').innerText = data.new_score; });
         }
+
+        function completeTask() {
+            const btn = document.getElementById('task-btn');
+            btn.innerText = "DONE";
+            btn.disabled = true;
+            btn.style.background = "green";
+            
+            fetch('/api/tap', { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ telegram_id: uid, bonus: 600 }) 
+            })
+            .then(r => r.json()).then(data => { 
+                if(data.new_score !== undefined) document.getElementById('score').innerText = data.new_score; 
+            });
+        }
+
         function show(id, btn) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
