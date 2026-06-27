@@ -6,7 +6,6 @@
     <title>Chahid Warbah 7</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* (VOTRE CSS ORIGINAL INCHANGÉ) */
         :root { --gold: #f39c12; --bg: #000; --card: #1e1e1e; --red: #e74c3c; --blue: #3498db; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; text-align: center; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         #score { font-size: 50px; font-weight: bold; color: var(--gold); margin: 25px 0; }
@@ -29,48 +28,45 @@
     </style>
 </head>
 <body>
-    <div id="score">0</div> <div id="shop-float" onclick="toggleShop(true)">🛒</div>
-    
+    <div id="score">{{ initial_score }}</div>
+    <div id="shop-float" onclick="toggleShop(true)">🛒</div>
+    <div id="shop-overlay">
+        <div class="shop-header"><h2>BOUTIQUE GIFT</h2><button class="btn-close" onclick="toggleShop(false)">×</button></div>
+        <div class="shop-card">
+            <h3>🎁 FLEXY DJEEZY</h3>
+            <span class="shop-price">30,000 DZ</span>
+            <input type="tel" id="djezzy_num" class="input-shop" placeholder="07XXXXXXXX">
+            <button class="btn-action" style="width:100%" onclick="alert('Commande envoyée')">COMMANDER</button>
+        </div>
+    </div>
     <div id="tap-page" class="page active">
         <img id="coin" src="https://cdn-icons-png.flaticon.com/512/2933/2933116.png" onclick="handleTap()">
     </div>
+    <div id="mining-page" class="page">
+        <div class="card"><div>🖥️ <b>Mineur CPU</b></div><button class="btn-action">10,000 DZ</button></div>
+    </div>
+    <div id="tasks-page" class="page"><div id="missions-container"></div></div>
+    <nav class="navbar">
+        <button class="nav-item active" onclick="show('tap-page', this)">TAP</button>
+        <button class="nav-item" onclick="show('mining-page', this)">MINING</button>
+        <button class="nav-item" onclick="show('tasks-page', this)">MISSIONS</button>
+    </nav>
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        
-        // Détection auto de l'utilisateur
-        let userUid;
-        const tgId = tg.initDataUnsafe?.user?.id;
-        if (tgId) {
-            userUid = "tg_" + tgId;
-        } else {
-            userUid = localStorage.getItem("user_email") || prompt("Entrez votre email pour continuer :");
-            localStorage.setItem("user_email", userUid);
-        }
-
+        const uid = String(tg.initDataUnsafe?.user?.id || "6046697939");
         function handleTap() {
             let scoreEl = document.getElementById('score');
-            let payload = { taps: 1 };
-            
-            // Envoi selon le type
-            if (userUid.startsWith('tg_')) {
-                payload.telegram_id = userUid;
-            } else {
-                payload.email = userUid;
-            }
-
-            fetch('/api/tap', { 
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify(payload) 
-            })
-            .then(r => r.json())
-            .then(data => {
-                if(data.new_score !== undefined) scoreEl.innerText = data.new_score;
-            });
+            fetch('/api/tap', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegram_id: uid }) })
+            .then(r => r.json()).then(data => { if(data.new_score !== undefined) scoreEl.innerText = data.new_score; });
         }
-        // ... (Gardez le reste des fonctions JS originales) ...
+        function toggleShop(open) { document.getElementById('shop-overlay').style.display = open ? 'block' : 'none'; }
+        function show(id, btn) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
+        }
     </script>
 </body>
 </html>
-
