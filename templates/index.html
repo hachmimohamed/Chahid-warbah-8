@@ -3,49 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Chahid Warbah 7</title>
+    <title>Chahid Warbah</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --gold: #f39c12; --bg: #000; --card: #1e1e1e; --red: #e74c3c; --blue: #3498db; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; text-align: center; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        #score { font-size: 50px; font-weight: bold; color: var(--gold); margin: 25px 0; }
-        .page { display: none; flex-grow: 1; padding: 20px; overflow-y: auto; padding-bottom: 80px; }
+        :root { --gold: #f39c12; --bg: #000; --card: #1e1e1e; --red: #e74c3c; }
+        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; text-align: center; height: 100vh; display: flex; flex-direction: column; }
+        #score { font-size: 50px; font-weight: bold; color: var(--gold); margin: 20px 0; }
+        .page { display: none; flex-grow: 1; padding: 20px; overflow-y: auto; padding-bottom: 100px; }
         .page.active { display: block; }
-        #coin { width: 200px; cursor: pointer; transition: 0.1s; -webkit-tap-highlight-color: transparent; margin-top: 40px; }
-        #coin:active { transform: scale(0.95); }
-        .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; text-align: left; }
-        .btn-action { background: var(--gold); border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; color: black; cursor: pointer; }
+        #coin { width: 200px; cursor: pointer; margin-top: 20px; }
+        .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .navbar { background: #111; display: flex; justify-content: space-around; padding: 15px 0; position: fixed; bottom: 0; width: 100%; border-top: 1px solid #333; }
-        .nav-item { background: none; border: none; color: #777; font-weight: bold; font-size: 14px; cursor: pointer; }
+        .nav-item { background: none; border: none; color: #777; font-weight: bold; cursor: pointer; }
         .nav-item.active { color: var(--gold); }
-        #shop-float { position: fixed; bottom: 85px; right: 20px; width: 60px; height: 60px; background: var(--red); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 25px; z-index: 99; cursor: pointer; border: 2px solid white; }
-        #shop-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; overflow-y: auto; padding: 20px; box-sizing: border-box; }
-        .shop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .btn-close { background: none; border: none; color: white; font-size: 30px; cursor: pointer; }
-        .shop-card { background: var(--card); border: 1px solid #333; border-radius: 15px; padding: 15px; margin-bottom: 15px; text-align: center; }
-        .shop-price { color: var(--gold); font-weight: bold; font-size: 18px; display: block; margin: 10px 0; }
-        .input-shop { width: 90%; padding: 10px; border-radius: 8px; border: none; margin-bottom: 10px; text-align: center; }
     </style>
 </head>
 <body>
-    <div id="score">{{ initial_score }}</div>
-    <div id="shop-float" onclick="toggleShop(true)">🛒</div>
-    <div id="shop-overlay">
-        <div class="shop-header"><h2>BOUTIQUE GIFT</h2><button class="btn-close" onclick="toggleShop(false)">×</button></div>
-        <div class="shop-card">
-            <h3>🎁 FLEXY DJEEZY</h3>
-            <span class="shop-price">30,000 DZ</span>
-            <input type="tel" id="djezzy_num" class="input-shop" placeholder="07XXXXXXXX">
-            <button class="btn-action" style="width:100%" onclick="alert('Commande envoyée')">COMMANDER</button>
-        </div>
-    </div>
+    <div id="score">0</div>
     <div id="tap-page" class="page active">
         <img id="coin" src="https://cdn-icons-png.flaticon.com/512/2933/2933116.png" onclick="handleTap()">
     </div>
     <div id="mining-page" class="page">
-        <div class="card"><div>🖥️ <b>Mineur CPU</b></div><button class="btn-action">10,000 DZ</button></div>
+        <div class="card"><div>🖥️ Mineur</div><button>10k</button></div>
     </div>
-    <div id="tasks-page" class="page"><div id="missions-container"></div></div>
+    <div id="tasks-page" class="page">
+        <div class="card"><div>✅ Follow Telegram</div><button>OK</button></div>
+    </div>
     <nav class="navbar">
         <button class="nav-item active" onclick="show('tap-page', this)">TAP</button>
         <button class="nav-item" onclick="show('mining-page', this)">MINING</button>
@@ -55,12 +38,15 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
         const uid = String(tg.initDataUnsafe?.user?.id || "6046697939");
+
+        // Charger le score au démarrage
+        fetch('/api/score?telegram_id=' + uid)
+        .then(r => r.json()).then(data => { document.getElementById('score').innerText = data.score; });
+
         function handleTap() {
-            let scoreEl = document.getElementById('score');
             fetch('/api/tap', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegram_id: uid }) })
-            .then(r => r.json()).then(data => { if(data.new_score !== undefined) scoreEl.innerText = data.new_score; });
+            .then(r => r.json()).then(data => { if(data.new_score) document.getElementById('score').innerText = data.new_score; });
         }
-        function toggleShop(open) { document.getElementById('shop-overlay').style.display = open ? 'block' : 'none'; }
         function show(id, btn) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
