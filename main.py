@@ -4,14 +4,13 @@ from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
-# Assurez-vous que cette variable est réglée sur votre "Internal Database URL" dans Render
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def get_db_connection():
-    # La connexion nécessite sslmode='require' pour les bases Render
-    return psycopg2.connect(DATABASE_URL, sslmode='require')
+    # Suppression de sslmode='require' si cela bloque la connexion
+    # Si cela échoue, essayez de remettre 'sslmode=require'
+    return psycopg2.connect(DATABASE_URL)
 
-# Fonction pour initialiser la table automatiquement au démarrage
 def init_db():
     try:
         conn = get_db_connection()
@@ -25,31 +24,15 @@ def init_db():
         conn.commit()
         cur.close()
         conn.close()
-        print("Base de données initialisée avec succès.")
+        print("Table 'users' prête.")
     except Exception as e:
-        print(f"Erreur lors de l'initialisation de la DB : {e}")
+        print(f"Erreur init_db: {e}")
 
-# Appel de l'initialisation au démarrage
 init_db()
 
 @app.route('/')
 def index():
     return render_template('index.html', initial_score=0)
-
-@app.route('/api/score', methods=['GET'])
-def get_score():
-    uid = request.args.get('telegram_id')
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT points FROM users WHERE id = %s", (uid,))
-        result = cur.fetchone()
-        score = result[0] if result else 0
-        cur.close()
-        conn.close()
-        return jsonify({"score": score})
-    except Exception as e:
-        return jsonify({"score": 0, "debug": str(e)})
 
 @app.route('/api/tap', methods=['POST'])
 def tap():
@@ -58,20 +41,16 @@ def tap():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        # Incrémenter ou insérer l'utilisateur
         cur.execute("UPDATE users SET points = points + 1 WHERE id = %s", (uid,))
         if cur.rowcount == 0:
             cur.execute("INSERT INTO users (id, points) VALUES (%s, 1)", (uid, 1))
         conn.commit()
-        
-        # Récupérer le nouveau score
         cur.execute("SELECT points FROM users WHERE id = %s", (uid,))
         new_score = cur.fetchone()[0]
         cur.close()
         conn.close()
         return jsonify({"new_score": new_score})
     except Exception as e:
-        # Retourne l'erreur pour pouvoir la lire dans les logs Render
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
