@@ -22,20 +22,22 @@ def shorten_link():
         
     try:
         if service == 'linkjust':
-            # Appel API selon la doc Linkjust fournie
+            # Appel API selon la doc Linkjust
             api_call = f"https://linkjust.com/api?api={api_key}&url={url}"
-            res = requests.get(api_call, timeout=10)
-            
-            if res.status_code == 200:
-                result = res.json()
-                # Vérification selon la documentation officielle Linkjust
-                if result.get("status") == "success":
-                    return jsonify({"short_url": result.get("shortenedUrl")})
+            try:
+                res = requests.get(api_call, timeout=10)
+                if res.status_code == 200:
+                    result = res.json()
+                    # Vérification stricte selon la documentation Linkjust
+                    if result.get("status") == "success":
+                        return jsonify({"short_url": result.get("shortenedUrl")})
+                    else:
+                        # Renvoyer le message spécifique de Linkjust
+                        return jsonify({"error": f"Linkjust: {result.get('message', 'Erreur')}"}), 400
                 else:
-                    # Renvoyer le message spécifique de Linkjust pour déboguer sur l'interface
-                    return jsonify({"error": result.get("message", "Erreur Linkjust")}), 400
-            else:
-                return jsonify({"error": f"Erreur HTTP {res.status_code}"}), 400
+                    return jsonify({"error": f"Erreur HTTP {res.status_code}"}), 400
+            except Exception as e:
+                return jsonify({"error": "Connexion API échouée"}), 500
         
         else:
             # API Exe.io
@@ -48,6 +50,7 @@ def shorten_link():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# Les autres routes restent inchangées
 @app.route('/api/buy_miner', methods=['POST'])
 def buy_miner():
     data = request.json
