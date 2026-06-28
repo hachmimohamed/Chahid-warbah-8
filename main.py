@@ -15,7 +15,8 @@ def shorten_link():
     data = request.json
     service = data.get('service') # 'exe' ou 'linkjust'
     url = data.get('url')
-    # Clés API sécurisées via les variables d'environnement sur Render
+    
+    # Récupération sécurisée des clés via les variables d'environnement sur Render
     api_key = os.environ.get("EXE_API_KEY") if service == 'exe' else os.environ.get("LINKJUST_API_KEY")
     base_url = "https://exe.io/api" if service == 'exe' else "https://linkjust.com/api"
     
