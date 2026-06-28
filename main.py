@@ -25,6 +25,7 @@ def shorten_link():
             api_call = f"https://linkjust.com/api?api={api_key}&url={url}"
             res = requests.get(api_call, timeout=10)
             if res.status_code == 200:
+                # Extraction corrigée avec 'shortenedUrl'
                 data = res.json()
                 return jsonify({"short_url": data.get('shortenedUrl')})
         else:
@@ -36,6 +37,27 @@ def shorten_link():
         return jsonify({"error": "API refusée"}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/buy_miner', methods=['POST'])
+def buy_miner():
+    data = request.json
+    uid = str(data.get('telegram_id'))
+    cost = 10000
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT points FROM users WHERE id = %s", (uid,))
+    res = cur.fetchone()
+    if res and res[0] >= cost:
+        cur.execute("UPDATE users SET points = points - %s WHERE id = %s", (cost, uid))
+        conn.commit()
+        cur.execute("SELECT points FROM users WHERE id = %s", (uid,))
+        new_score = cur.fetchone()[0]
+        cur.close()
+        conn.close()
+        return jsonify({"success": True, "new_score": new_score})
+    cur.close()
+    conn.close()
+    return jsonify({"success": False, "message": "Solde insuffisant"})
 
 @app.route('/api/tap', methods=['POST'])
 def tap():
