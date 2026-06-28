@@ -20,19 +20,26 @@
 </head>
 <body>
     <div id="score">0</div>
+    
     <div id="tap-page" class="page active"><img id="coin" src="https://cdn-icons-png.flaticon.com/512/2933/2933116.png" onclick="handleTap()"></div>
-    <div id="mining-page" class="page"><div class="card"><div>🖥️ Mineur</div><button>10k</button></div></div>
+    
+    <div id="mining-page" class="page">
+        <div class="card"><div>🖥️ Mineur</div><button>10k</button></div>
+    </div>
+    
     <div id="tasks-page" class="page">
         <div class="card"><div>Binance</div><button id="btn1" onclick="startMission('exe', 'btn1', 'https://www.binance.com/referral/earn-together/refer2earn-usdc/claim?hl=fr&ref=GRO_28502_CH9GU&utm_source=referral_entrance', 600)">OK</button></div>
         <div class="card"><div>Bybit</div><button id="btn2" onclick="startMission('exe', 'btn2', 'https://www.bybit.com/invite?ref=EV3EWKR&medium=referral&utm_campaign=evergreen', 600)">OK</button></div>
-        <div class="card"><div>Linkjust</div><button id="btn3" onclick="startMission('linkjust', 'btn3', 'VOTRE_URL_LINKJUST', 600)">OK</button></div>
-        <div class="card"><div>Exe.io</div><button id="btn4" onclick="startMission('exe', 'btn4', 'VOTRE_URL_EXE', 600)">OK</button></div>
+        <div class="card"><div>Linkjust</div><button id="btn3" onclick="startMission('linkjust', 'btn3', 'https://linkjust.com/dwoKmgexgz5sfjM', 600)">OK</button></div>
+        <div class="card"><div>Exe.io</div><button id="btn4" onclick="startMission('exe', 'btn4', 'https://exe.io/CwBBbE', 600)">OK</button></div>
     </div>
+    
     <nav class="navbar">
         <button class="nav-item active" onclick="show('tap-page', this)">TAP</button>
         <button class="nav-item" onclick="show('mining-page', this)">MINING</button>
         <button class="nav-item" onclick="show('tasks-page', this)">MISSIONS</button>
     </nav>
+    
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
