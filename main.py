@@ -9,23 +9,21 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL, sslmode='require')
 
-# Route commune pour raccourcir les liens
+# Route pour la gestion des missions
 @app.route('/api/shorten', methods=['POST'])
 def shorten_link():
     data = request.json
-    service = data.get('service') # 'exe' ou 'linkjust'
+    service = data.get('service')
     url = data.get('url')
-    
-    # Récupération sécurisée des clés via les variables d'environnement sur Render
+    # Récupère les clés depuis les variables d'environnement Render (EXE_API_KEY et LINKJUST_API_KEY)
     api_key = os.environ.get("EXE_API_KEY") if service == 'exe' else os.environ.get("LINKJUST_API_KEY")
     base_url = "https://exe.io/api" if service == 'exe' else "https://linkjust.com/api"
     
-    api_call = f"{base_url}?api={api_key}&url={url}&format=text"
     try:
-        response = requests.get(api_call)
-        return jsonify({"short_url": response.text})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        res = requests.get(f"{base_url}?api={api_key}&url={url}&format=text")
+        return jsonify({"short_url": res.text})
+    except:
+        return jsonify({"short_url": ""})
 
 @app.route('/api/tap', methods=['POST'])
 def tap():
