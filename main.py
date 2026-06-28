@@ -22,19 +22,24 @@ def shorten_link():
         
     try:
         if service == 'linkjust':
+            # Utilisation de l'API Linkjust
             api_call = f"https://linkjust.com/api?api={api_key}&url={url}"
             res = requests.get(api_call, timeout=10)
             if res.status_code == 200:
                 data = res.json()
-                # Debug : retourne le contenu brut si 'shortenedUrl' est absent
-                return jsonify({"short_url": data.get('shortenedUrl') or str(data)})
+                # Vérification explicite de la clé 'shortenedUrl'
+                if 'shortenedUrl' in data:
+                    return jsonify({"short_url": data['shortenedUrl']})
+                else:
+                    return jsonify({"error": f"API Linkjust: {data.get('message', 'Erreur inconnue')}"}), 500
         else:
+            # Utilisation de l'API Exe.io
             api_call = f"https://exe.io/api?api={api_key}&url={url}&format=text"
             res = requests.get(api_call, timeout=10)
             if res.status_code == 200:
                 return jsonify({"short_url": res.text})
             
-        return jsonify({"error": "API refusée"}), 500
+        return jsonify({"error": "Service indisponible"}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -93,6 +98,5 @@ def index():
     return render_template('index.html')
 
 if __name__ == '__main__':
-    # Utilisation du port 10000 par défaut pour Render
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
