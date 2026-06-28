@@ -20,17 +20,16 @@
 </head>
 <body>
     <div id="score">0</div>
-    
     <div id="tap-page" class="page active"><img id="coin" src="https://cdn-icons-png.flaticon.com/512/2933/2933116.png" onclick="handleTap()"></div>
     
     <div id="mining-page" class="page">
         <div class="card"><div>🖥️ Mineur</div><button>10k</button></div>
     </div>
-    
+
     <div id="tasks-page" class="page">
         <div class="card"><div>Binance</div><button id="btn1" onclick="startMission('exe', 'btn1', 'https://www.binance.com/referral/earn-together/refer2earn-usdc/claim?hl=fr&ref=GRO_28502_CH9GU&utm_source=referral_entrance', 600)">OK</button></div>
         <div class="card"><div>Bybit</div><button id="btn2" onclick="startMission('exe', 'btn2', 'https://www.bybit.com/invite?ref=EV3EWKR&medium=referral&utm_campaign=evergreen', 600)">OK</button></div>
-        <div class="card"><div>Linkjust</div><button id="btn3" onclick="startMission('linkjust', 'btn3', 'https://linkjust.com/dwoKmgexgz5sfjM', 600)">OK</button></div>
+        <div class="card"><div>Linkjust</div><button id="btn3" onclick="startMission('linkjust', 'btn3', 'https://linkjust.com/vN9NHmR2hQDIzF2', 600)">OK</button></div>
         <div class="card"><div>Exe.io</div><button id="btn4" onclick="startMission('exe', 'btn4', 'https://exe.io/CwBBbE', 600)">OK</button></div>
     </div>
     
@@ -39,7 +38,6 @@
         <button class="nav-item" onclick="show('mining-page', this)">MINING</button>
         <button class="nav-item" onclick="show('tasks-page', this)">MISSIONS</button>
     </nav>
-    
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
@@ -50,10 +48,18 @@
         async function startMission(service, btnId, url, bonus) {
             const btn = document.getElementById(btnId);
             btn.innerText = "...";
-            const res = await fetch('/api/shorten', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ service, url }) });
-            const data = await res.json();
-            if(data.short_url) { window.open(data.short_url, '_blank'); completeTask(btnId, bonus); }
-            else { btn.innerText = "Erreur"; }
+            try {
+                const res = await fetch('/api/shorten', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({ service, url }) 
+                });
+                const data = await res.json();
+                if(data.short_url) { 
+                    window.open(data.short_url, '_blank'); 
+                    completeTask(btnId, bonus); 
+                } else { btn.innerText = "Erreur"; }
+            } catch (e) { btn.innerText = "Erreur"; }
         }
 
         function completeTask(btnId, bonus) {
