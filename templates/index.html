@@ -58,10 +58,10 @@
                     body: JSON.stringify({ service, url }) 
                 });
                 const data = await res.json();
-                if(data.short_url) { 
+                if(data.short_url && !data.short_url.includes('status')) { 
                     window.open(data.short_url, '_blank'); 
                     completeTask(btnId, bonus); 
-                } else { btn.innerText = "Erreur"; }
+                } else { btn.innerText = data.short_url || "Erreur"; }
             } catch (e) { btn.innerText = "Erreur"; }
         }
 
