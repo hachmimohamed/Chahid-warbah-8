@@ -23,10 +23,10 @@
     <div id="tap-page" class="page active"><img id="coin" src="https://cdn-icons-png.flaticon.com/512/2933/2933116.png" onclick="handleTap()"></div>
     <div id="mining-page" class="page"><div class="card"><div>🖥️ Mineur</div><button>10k</button></div></div>
     <div id="tasks-page" class="page">
-        <div class="card"><div>Binance</div><button id="btn1" onclick="startMission('/api/generate-exe', 'btn1', 'https://www.binance.com/...', 600)">OK</button></div>
-        <div class="card"><div>Bybit</div><button id="btn2" onclick="startMission('/api/generate-exe', 'btn2', 'https://www.bybit.com/...', 600)">OK</button></div>
-        <div class="card"><div>Linkjust</div><button id="btn3" onclick="startMission('/api/generate-linkjust', 'btn3', 'VOTRE_URL', 600)">OK</button></div>
-        <div class="card"><div>Exe.io</div><button id="btn4" onclick="startMission('/api/generate-exe', 'btn4', 'VOTRE_URL', 600)">OK</button></div>
+        <div class="card"><div>Binance</div><button id="btn1" onclick="startMission('/api/shorten-exe', 'btn1', 'URL_BINANCE', 600)">OK</button></div>
+        <div class="card"><div>Bybit</div><button id="btn2" onclick="startMission('/api/shorten-exe', 'btn2', 'URL_BYBIT', 600)">OK</button></div>
+        <div class="card"><div>Linkjust</div><button id="btn3" onclick="startMission('/api/shorten-linkjust', 'btn3', 'URL_LINKJUST', 600)">OK</button></div>
+        <div class="card"><div>Exe.io</div><button id="btn4" onclick="startMission('/api/shorten-exe', 'btn4', 'URL_EXE', 600)">OK</button></div>
     </div>
     <nav class="navbar">
         <button class="nav-item active" onclick="show('tap-page', this)">TAP</button>
@@ -52,11 +52,11 @@
             const btn = document.getElementById(btnId);
             btn.innerText = "DONE"; btn.disabled = true; btn.style.background = "green";
             fetch('/api/tap', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegram_id: uid, bonus: bonus }) })
-            .then(r => r.json()).then(data => { if(data.new_score !== undefined) document.getElementById('score').innerText = data.new_score; });
+            .then(r => r.json()).then(d => { document.getElementById('score').innerText = d.new_score; });
         }
 
         function handleTap() { fetch('/api/tap', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegram_id: uid }) })
-            .then(r => r.json()).then(data => { if(data.new_score !== undefined) document.getElementById('score').innerText = data.new_score; }); }
+            .then(r => r.json()).then(d => { document.getElementById('score').innerText = d.new_score; }); }
 
         function show(id, btn) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
