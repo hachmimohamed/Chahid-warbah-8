@@ -21,7 +21,6 @@ def shorten_link():
         return jsonify({"error": "Clé API manquante"}), 500
         
     try:
-        # Ajustement pour Linkjust : on retire le format texte si cela bloque
         if service == 'linkjust':
             api_call = f"https://linkjust.com/api?api={api_key}&url={url}"
         else:
@@ -29,9 +28,7 @@ def shorten_link():
             
         res = requests.get(api_call, timeout=10)
         
-        # Gestion de la réponse
         if res.status_code == 200:
-            # Si Linkjust renvoie du JSON, on extrait l'URL, sinon on prend le texte
             short_url = res.json().get('short_url') if service == 'linkjust' else res.text
             return jsonify({"short_url": short_url})
             
