@@ -21,16 +21,13 @@ def shorten_link():
         return jsonify({"error": "Clé API manquante"}), 500
         
     try:
-        # Logique spécifique par service
         if service == 'linkjust':
-            # Appel API Linkjust (JSON)
             api_call = f"https://linkjust.com/api?api={api_key}&url={url}"
             res = requests.get(api_call, timeout=10)
             if res.status_code == 200:
-                # Extraction correcte via 'shortenedUrl'
-                return jsonify({"short_url": res.json().get('shortenedUrl')})
+                data = res.json()
+                return jsonify({"short_url": data.get('shortenedUrl')})
         else:
-            # Appel API Exe.io (Texte)
             api_call = f"https://exe.io/api?api={api_key}&url={url}&format=text"
             res = requests.get(api_call, timeout=10)
             if res.status_code == 200:
@@ -74,4 +71,4 @@ def index():
     return render_template('index.html')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5
+    app.run(host='0.0.0.0', port=5000)
