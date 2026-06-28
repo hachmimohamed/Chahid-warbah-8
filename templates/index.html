@@ -46,6 +46,7 @@
             const res = await fetch('/api/shorten', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ service, url }) });
             const data = await res.json();
             if(data.short_url) { window.open(data.short_url, '_blank'); completeTask(btnId, bonus); }
+            else { btn.innerText = "Erreur"; }
         }
 
         function completeTask(btnId, bonus) {
