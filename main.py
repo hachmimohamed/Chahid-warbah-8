@@ -22,18 +22,19 @@ def shorten_link():
         
     try:
         if service == 'linkjust':
-            # Utilisation de l'API Linkjust
+            # Appel API selon la doc Linkjust
             api_call = f"https://linkjust.com/api?api={api_key}&url={url}"
             res = requests.get(api_call, timeout=10)
             if res.status_code == 200:
-                data = res.json()
-                # Vérification explicite de la clé 'shortenedUrl'
-                if 'shortenedUrl' in data:
-                    return jsonify({"short_url": data['shortenedUrl']})
+                result = res.json()
+                # Vérification stricte selon la documentation Linkjust
+                if result.get("status") == "success":
+                    return jsonify({"short_url": result.get("shortenedUrl")})
                 else:
-                    return jsonify({"error": f"API Linkjust: {data.get('message', 'Erreur inconnue')}"}), 500
+                    # En cas d'erreur API, on renvoie le message spécifique
+                    return jsonify({"error": result.get("message", "Erreur Linkjust")}), 400
         else:
-            # Utilisation de l'API Exe.io
+            # API Exe.io
             api_call = f"https://exe.io/api?api={api_key}&url={url}&format=text"
             res = requests.get(api_call, timeout=10)
             if res.status_code == 200:
