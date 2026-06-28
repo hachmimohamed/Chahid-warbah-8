@@ -25,9 +25,9 @@ def shorten_link():
             api_call = f"https://linkjust.com/api?api={api_key}&url={url}"
             res = requests.get(api_call, timeout=10)
             if res.status_code == 200:
-                # Extraction corrigée avec 'shortenedUrl'
                 data = res.json()
-                return jsonify({"short_url": data.get('shortenedUrl')})
+                # Debug : retourne le contenu brut si 'shortenedUrl' est absent
+                return jsonify({"short_url": data.get('shortenedUrl') or str(data)})
         else:
             api_call = f"https://exe.io/api?api={api_key}&url={url}&format=text"
             res = requests.get(api_call, timeout=10)
@@ -93,4 +93,5 @@ def index():
     return render_template('index.html')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
