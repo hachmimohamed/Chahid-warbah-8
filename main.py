@@ -12,7 +12,7 @@ def get_db_connection():
 @app.route('/api/shorten', methods=['POST'])
 def shorten_link():
     data = request.json
-    service = data.get('service') # Sera 'exe' ou 'linkjust'
+    service = data.get('service')
     url = data.get('url')
     
     api_key = os.environ.get("EXE_API_KEY") if service == 'exe' else os.environ.get("LINKJUST_API_KEY")
@@ -21,16 +21,16 @@ def shorten_link():
         return jsonify({"error": "Clé API manquante"}), 500
         
     try:
-        # LOGIQUE SÉPARÉE POUR CHAQUE SERVICE
+        # Logique spécifique par service
         if service == 'linkjust':
-            # Appel spécifique pour Linkjust (JSON)
+            # Appel API Linkjust (JSON)
             api_call = f"https://linkjust.com/api?api={api_key}&url={url}"
             res = requests.get(api_call, timeout=10)
             if res.status_code == 200:
+                # Extraction correcte via 'shortenedUrl'
                 return jsonify({"short_url": res.json().get('shortenedUrl')})
-        
-        else: 
-            # Appel spécifique pour Exe.io (Texte)
+        else:
+            # Appel API Exe.io (Texte)
             api_call = f"https://exe.io/api?api={api_key}&url={url}&format=text"
             res = requests.get(api_call, timeout=10)
             if res.status_code == 200:
@@ -40,4 +40,38 @@ def shorten_link():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# ... (Gardez le reste de votre code inchangé : /api/tap, /api/score, etc.)
+@app.route('/api/tap', methods=['POST'])
+def tap():
+    data = request.json
+    uid = str(data.get('telegram_id'))
+    bonus = int(data.get('bonus', 1))
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE users SET points = points + %s WHERE id = %s", (bonus, uid))
+    if cur.rowcount == 0:
+        cur.execute("INSERT INTO users (id, points) VALUES (%s, %s)", (uid, bonus))
+    conn.commit()
+    cur.execute("SELECT points FROM users WHERE id = %s", (uid,))
+    new_score = cur.fetchone()[0]
+    cur.close()
+    conn.close()
+    return jsonify({"new_score": new_score})
+
+@app.route('/api/score', methods=['GET'])
+def get_score():
+    uid = request.args.get('telegram_id')
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT points FROM users WHERE id = %s", (uid,))
+    res = cur.fetchone()
+    score = res[0] if res else 0
+    cur.close()
+    conn.close()
+    return jsonify({"score": score})
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5
