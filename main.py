@@ -9,21 +9,35 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL, sslmode='require')
 
-# Route pour la gestion des missions
 @app.route('/api/shorten', methods=['POST'])
 def shorten_link():
     data = request.json
     service = data.get('service')
     url = data.get('url')
-    # Récupère les clés depuis les variables d'environnement Render (EXE_API_KEY et LINKJUST_API_KEY)
-    api_key = os.environ.get("EXE_API_KEY") if service == 'exe' else os.environ.get("LINKJUST_API_KEY")
-    base_url = "https://exe.io/api" if service == 'exe' else "https://linkjust.com/api"
     
+    api_key = os.environ.get("EXE_API_KEY") if service == 'exe' else os.environ.get("LINKJUST_API_KEY")
+    
+    if not api_key:
+        return jsonify({"error": "Clé API manquante"}), 500
+        
     try:
-        res = requests.get(f"{base_url}?api={api_key}&url={url}&format=text")
-        return jsonify({"short_url": res.text})
-    except:
-        return jsonify({"short_url": ""})
+        # Ajustement pour Linkjust : on retire le format texte si cela bloque
+        if service == 'linkjust':
+            api_call = f"https://linkjust.com/api?api={api_key}&url={url}"
+        else:
+            api_call = f"https://exe.io/api?api={api_key}&url={url}&format=text"
+            
+        res = requests.get(api_call, timeout=10)
+        
+        # Gestion de la réponse
+        if res.status_code == 200:
+            # Si Linkjust renvoie du JSON, on extrait l'URL, sinon on prend le texte
+            short_url = res.json().get('short_url') if service == 'linkjust' else res.text
+            return jsonify({"short_url": short_url})
+            
+        return jsonify({"error": "API refusée"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/tap', methods=['POST'])
 def tap():
@@ -48,8 +62,8 @@ def get_score():
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("SELECT points FROM users WHERE id = %s", (uid,))
-    result = cur.fetchone()
-    score = result[0] if result else 0
+    res = cur.fetchone()
+    score = res[0] if res else 0
     cur.close()
     conn.close()
     return jsonify({"score": score})
