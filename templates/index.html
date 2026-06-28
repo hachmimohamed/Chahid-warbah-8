@@ -23,7 +23,10 @@
     <div id="tap-page" class="page active"><img id="coin" src="https://cdn-icons-png.flaticon.com/512/2933/2933116.png" onclick="handleTap()"></div>
     
     <div id="mining-page" class="page">
-        <div class="card"><div>🖥️ Mineur</div><button>10k</button></div>
+        <div class="card">
+            <div>🖥️ Mineur (Coût: 10k)</div>
+            <button id="btnMiner" onclick="buyMiner()">Acheter</button>
+        </div>
     </div>
 
     <div id="tasks-page" class="page">
@@ -60,6 +63,25 @@
                     completeTask(btnId, bonus); 
                 } else { btn.innerText = "Erreur"; }
             } catch (e) { btn.innerText = "Erreur"; }
+        }
+
+        async function buyMiner() {
+            const btn = document.getElementById('btnMiner');
+            btn.innerText = "...";
+            const res = await fetch('/api/buy_miner', { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ telegram_id: uid }) 
+            });
+            const data = await res.json();
+            if(data.success) {
+                alert("Acheté avec succès !");
+                document.getElementById('score').innerText = data.new_score;
+                btn.innerText = "OWNED"; btn.disabled = true;
+            } else {
+                alert(data.message);
+                btn.innerText = "Acheter";
+            }
         }
 
         function completeTask(btnId, bonus) {
