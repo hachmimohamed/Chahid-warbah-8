@@ -23,16 +23,13 @@
     <div id="tap-page" class="page active"><img id="coin" src="https://cdn-icons-png.flaticon.com/512/2933/2933116.png" onclick="handleTap()"></div>
     
     <div id="mining-page" class="page">
-        <div class="card">
-            <div>🖥️ Mineur (Coût: 10k)</div>
-            <button id="btnMiner" onclick="buyMiner()">Acheter</button>
-        </div>
+        <div class="card"><div>🖥️ Mineur (Coût: 10k)</div><button id="btnMiner" onclick="buyMiner()">Acheter</button></div>
     </div>
 
     <div id="tasks-page" class="page">
         <div class="card"><div>Binance</div><button id="btn1" onclick="startMission('exe', 'btn1', 'https://www.binance.com/referral/earn-together/refer2earn-usdc/claim?hl=fr&ref=GRO_28502_CH9GU&utm_source=referral_entrance', 600)">OK</button></div>
         <div class="card"><div>Bybit</div><button id="btn2" onclick="startMission('exe', 'btn2', 'https://www.bybit.com/invite?ref=EV3EWKR&medium=referral&utm_campaign=evergreen', 600)">OK</button></div>
-        <div class="card"><div>Linkjust</div><button id="btn3" onclick="startMission('linkjust', 'btn3', 'https://linkjust.com/vN9NHmR2hQDIzF2', 600)">OK</button></div>
+        <div class="card"><div>Linkjust</div><button id="btn3" onclick="startMission('linkjust', 'btn3', 'https://linkjust.com/dwoKmgexgz5sfjM', 600)">OK</button></div>
         <div class="card"><div>Exe.io</div><button id="btn4" onclick="startMission('exe', 'btn4', 'https://exe.io/CwBBbE', 600)">OK</button></div>
     </div>
     
@@ -58,10 +55,10 @@
                     body: JSON.stringify({ service, url }) 
                 });
                 const data = await res.json();
-                if(data.short_url && !data.short_url.includes('status')) { 
+                if(data.short_url) { 
                     window.open(data.short_url, '_blank'); 
                     completeTask(btnId, bonus); 
-                } else { btn.innerText = data.short_url || "Erreur"; }
+                } else { btn.innerText = "Erreur"; console.error(data.error); }
             } catch (e) { btn.innerText = "Erreur"; }
         }
 
@@ -75,7 +72,6 @@
             });
             const data = await res.json();
             if(data.success) {
-                alert("Acheté avec succès !");
                 document.getElementById('score').innerText = data.new_score;
                 btn.innerText = "OWNED"; btn.disabled = true;
             } else {
