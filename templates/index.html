@@ -20,81 +20,44 @@
 </head>
 <body>
     <div id="score">0</div>
-    
-    <div id="tap-page" class="page active">
-        <img id="coin" src="https://cdn-icons-png.flaticon.com/512/2933/2933116.png" onclick="handleTap()">
-    </div>
-    
-    <div id="mining-page" class="page">
-        <div class="card"><div>🖥️ Mineur</div><button>10k</button></div>
-    </div>
-    
+    <div id="tap-page" class="page active"><img id="coin" src="https://cdn-icons-png.flaticon.com/512/2933/2933116.png" onclick="handleTap()"></div>
+    <div id="mining-page" class="page"><div class="card"><div>🖥️ Mineur</div><button>10k</button></div></div>
     <div id="tasks-page" class="page">
-        <div class="card">
-            <div>Binance</div>
-            <a href="#" target="_blank" onclick="completeTask('btn1', 600)">
-                <button id="btn1">OK</button>
-            </a>
-        </div>
-        <div class="card">
-            <div>Bybit</div>
-            <a href="#" target="_blank" onclick="completeTask('btn2', 600)">
-                <button id="btn2">OK</button>
-            </a>
-        </div>
-        <div class="card">
-            <div>Linkjust</div>
-            <a href="#" target="_blank" onclick="completeTask('btn3', 600)">
-                <button id="btn3">OK</button>
-            </a>
-        </div>
-        <div class="card">
-            <div>Exe.io</div>
-            <a href="#" target="_blank" onclick="completeTask('btn4', 600)">
-                <button id="btn4">OK</button>
-            </a>
-        </div>
+        <div class="card"><div>Binance</div><button id="btn1" onclick="startMission('/api/generate-exe', 'btn1', 'https://www.binance.com/...', 600)">OK</button></div>
+        <div class="card"><div>Bybit</div><button id="btn2" onclick="startMission('/api/generate-exe', 'btn2', 'https://www.bybit.com/...', 600)">OK</button></div>
+        <div class="card"><div>Linkjust</div><button id="btn3" onclick="startMission('/api/generate-linkjust', 'btn3', 'VOTRE_URL', 600)">OK</button></div>
+        <div class="card"><div>Exe.io</div><button id="btn4" onclick="startMission('/api/generate-exe', 'btn4', 'VOTRE_URL', 600)">OK</button></div>
     </div>
-
     <nav class="navbar">
         <button class="nav-item active" onclick="show('tap-page', this)">TAP</button>
         <button class="nav-item" onclick="show('mining-page', this)">MINING</button>
         <button class="nav-item" onclick="show('tasks-page', this)">MISSIONS</button>
     </nav>
-
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
         const uid = String(tg.initDataUnsafe?.user?.id || "6046697939");
 
-        // Charger le score initial
-        fetch('/api/score?telegram_id=' + uid)
-        .then(r => r.json()).then(data => { document.getElementById('score').innerText = data.score; });
+        fetch('/api/score?telegram_id=' + uid).then(r => r.json()).then(data => { document.getElementById('score').innerText = data.score; });
 
-        // Fonction pour le clic normal
-        function handleTap() {
-            fetch('/api/tap', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegram_id: uid }) })
+        async function startMission(api, btnId, url, bonus) {
+            const btn = document.getElementById(btnId);
+            btn.innerText = "...";
+            const res = await fetch(api, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ url: url }) });
+            const data = await res.json();
+            if(data.short_url) { window.open(data.short_url, '_blank'); completeTask(btnId, bonus); }
+        }
+
+        function completeTask(btnId, bonus) {
+            const btn = document.getElementById(btnId);
+            btn.innerText = "DONE"; btn.disabled = true; btn.style.background = "green";
+            fetch('/api/tap', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegram_id: uid, bonus: bonus }) })
             .then(r => r.json()).then(data => { if(data.new_score !== undefined) document.getElementById('score').innerText = data.new_score; });
         }
 
-        // Fonction pour valider une mission
-        function completeTask(btnId, bonus) {
-            const btn = document.getElementById(btnId);
-            btn.innerText = "DONE";
-            btn.disabled = true;
-            btn.style.background = "green";
-            
-            fetch('/api/tap', { 
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ telegram_id: uid, bonus: bonus }) 
-            })
-            .then(r => r.json()).then(data => { 
-                if(data.new_score !== undefined) document.getElementById('score').innerText = data.new_score; 
-            });
-        }
+        function handleTap() { fetch('/api/tap', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegram_id: uid }) })
+            .then(r => r.json()).then(data => { if(data.new_score !== undefined) document.getElementById('score').innerText = data.new_score; }); }
 
-        // Gestion de la navigation
         function show(id, btn) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
