@@ -33,13 +33,16 @@ def shorten_link():
     data = request.json
     service = data.get('service')
     url = data.get('url')
-    api_key = os.environ.get("EXE_API_KEY") if service == 'exe' else os.environ.get("LINKJUST_API_KEY")
+    
+    # Clé officielle intégrée pour Linkjust
+    api_key = "a7cca9f244769bf43cbdd4a4f560630b2cb9dd5a" if service == 'linkjust' else os.environ.get("EXE_API_KEY")
     
     if not api_key:
         return jsonify({"error": "Clé API manquante"}), 500
         
     try:
         if service == 'linkjust':
+            # Utilisation de la méthode JSON officielle de Linkjust
             api_call = f"https://linkjust.com/api?api={api_key}&url={url}"
             res = requests.get(api_call, timeout=10)
             if res.status_code == 200:
