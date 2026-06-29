@@ -34,17 +34,17 @@ def shorten_link():
     service = data.get('service')
     url = data.get('url')
     
-    # Clé officielle intégrée pour Linkjust
-    api_key = "a7cca9f244769bf43cbdd4a4f560630b2cb9dd5a" if service == 'linkjust' else os.environ.get("EXE_API_KEY")
+    # Utilisation des variables d'environnement (Sécurisé)
+    api_key = os.environ.get("LINKJUST_API_KEY") if service == 'linkjust' else os.environ.get("EXE_API_KEY")
     
     if not api_key:
-        return jsonify({"error": "Clé API manquante"}), 500
+        return jsonify({"error": "Clé API non configurée"}), 500
         
     try:
         if service == 'linkjust':
-            # Utilisation de la méthode JSON officielle de Linkjust
+            # Appel API Linkjust avec Timeout
             api_call = f"https://linkjust.com/api?api={api_key}&url={url}"
-            res = requests.get(api_call, timeout=10)
+            res = requests.get(api_call, timeout=15)
             if res.status_code == 200:
                 result = res.json()
                 if result.get("status") == "success":
@@ -53,7 +53,7 @@ def shorten_link():
             return jsonify({"error": "Erreur connexion Linkjust"}), 500
         else:
             api_call = f"https://exe.io/api?api={api_key}&url={url}&format=text"
-            res = requests.get(api_call, timeout=10)
+            res = requests.get(api_call, timeout=15)
             if res.status_code == 200:
                 return jsonify({"short_url": res.text})
             return jsonify({"error": "Service indisponible"}), 500
@@ -75,7 +75,7 @@ def complete_task():
     if res and res[0] > datetime.now() - timedelta(hours=24):
         cur.close()
         conn.close()
-        return jsonify({"success": False, "message": "Déjà fait aujourd'hui"})
+        return jsonify({"success": False, "message": "Déjà fait"})
     
     cur.execute("UPDATE users SET points = points + %s WHERE id = %s", (bonus, uid))
     cur.execute("""
@@ -89,6 +89,8 @@ def complete_task():
     cur.close()
     conn.close()
     return jsonify({"success": True, "new_score": new_score})
+
+# --- (Gardez le reste de vos fonctions buy_miner, tap, score et le main inchangés) ---
 
 @app.route('/api/buy_miner', methods=['POST'])
 def buy_miner():
