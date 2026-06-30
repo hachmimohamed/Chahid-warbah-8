@@ -5,6 +5,7 @@ from flask import Flask, render_template, request, jsonify
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
+# DATABASE_URL est géré automatiquement par Render
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def get_db_connection():
@@ -34,29 +35,30 @@ def shorten_link():
     service = data.get('service')
     url = data.get('url')
     
-    # Utilisation des variables d'environnement (Sécurisé)
+    # Récupération sécurisée depuis les variables d'environnement Render
     api_key = os.environ.get("LINKJUST_API_KEY") if service == 'linkjust' else os.environ.get("EXE_API_KEY")
     
     if not api_key:
-        return jsonify({"error": "Clé API non configurée"}), 500
+        return jsonify({"error": "Clé API non configurée sur Render"}), 500
         
     try:
         if service == 'linkjust':
-            # Appel API Linkjust avec Timeout
+            # Appel API Linkjust
             api_call = f"https://linkjust.com/api?api={api_key}&url={url}"
             res = requests.get(api_call, timeout=15)
             if res.status_code == 200:
                 result = res.json()
                 if result.get("status") == "success":
                     return jsonify({"short_url": result.get("shortenedUrl")})
-                return jsonify({"error": f"Linkjust: {result.get('message', 'Erreur')}"}), 400
-            return jsonify({"error": "Erreur connexion Linkjust"}), 500
+                return jsonify({"error": f"Linkjust: {result.get('message', 'Erreur API')}"}), 400
+            return jsonify({"error": f"Erreur serveur Linkjust ({res.status_code})"}), 500
         else:
+            # Service Exe.io
             api_call = f"https://exe.io/api?api={api_key}&url={url}&format=text"
             res = requests.get(api_call, timeout=15)
             if res.status_code == 200:
                 return jsonify({"short_url": res.text})
-            return jsonify({"error": "Service indisponible"}), 500
+            return jsonify({"error": "Service Exe.io indisponible"}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -89,8 +91,6 @@ def complete_task():
     cur.close()
     conn.close()
     return jsonify({"success": True, "new_score": new_score})
-
-# --- (Gardez le reste de vos fonctions buy_miner, tap, score et le main inchangés) ---
 
 @app.route('/api/buy_miner', methods=['POST'])
 def buy_miner():
