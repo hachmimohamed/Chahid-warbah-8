@@ -27,10 +27,10 @@
     </div>
 
     <div id="tasks-page" class="page">
-        <div class="card"><div>Binance</div><button id="btn1" onclick="startMission('exe', 'btn1', 'https://www.binance.com/referral/earn-together/refer2earn-usdc/claim?hl=fr&ref=GRO_28502_CH9GU&utm_source=referral_entrance', 600)">OK</button></div>
-        <div class="card"><div>Bybit</div><button id="btn2" onclick="startMission('exe', 'btn2', 'https://www.bybit.com/invite?ref=EV3EWKR&medium=referral&utm_campaign=evergreen', 600)">OK</button></div>
-        <div class="card"><div>Linkjust</div><button id="btn3" onclick="startMission('linkjust', 'btn3', 'https://linkjust.com/dwoKmgexgz5sfjM', 600)">OK</button></div>
-        <div class="card"><div>Exe.io</div><button id="btn4" onclick="startMission('exe', 'btn4', 'https://exe.io/CwBBbE', 600)">OK</button></div>
+        <div class="card"><div>Binance</div><button id="btn1" onclick="startMission('binance', 'btn1', 'URL_BINANCE', 600)">OK</button></div>
+        <div class="card"><div>Bybit</div><button id="btn2" onclick="startMission('bybit', 'btn2', 'URL_BYBIT', 600)">OK</button></div>
+        <div class="card"><div>Linkjust</div><button id="btn3" onclick="startMission('linkjust', 'btn3', 'URL_LINKJUST', 600)">OK</button></div>
+        <div class="card"><div>Exe.io</div><button id="btn4" onclick="startMission('exe_io', 'btn4', 'URL_EXE_IO', 600)">OK</button></div>
     </div>
     
     <nav class="navbar">
@@ -45,49 +45,36 @@
 
         fetch('/api/score?telegram_id=' + uid).then(r => r.json()).then(data => { document.getElementById('score').innerText = data.score; });
 
-        async function startMission(service, btnId, url, bonus) {
+        async function startMission(taskName, btnId, url, bonus) {
             const btn = document.getElementById(btnId);
-            btn.innerText = "...";
-            try {
-                const res = await fetch('/api/shorten', { 
-                    method: 'POST', 
-                    headers: {'Content-Type': 'application/json'}, 
-                    body: JSON.stringify({ service, url }) 
-                });
-                const data = await res.json();
-                if(data.short_url) { 
-                    window.open(data.short_url, '_blank'); 
-                    completeTask(btnId, bonus); 
-                } else { 
-                    btn.innerText = data.error || "Erreur"; 
-                    console.error("Erreur API :", data.error); 
-                }
-            } catch (e) { btn.innerText = "Erreur"; }
+            const res = await fetch('/api/shorten', { 
+                method: 'POST', headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ service: taskName, url: url }) 
+            });
+            const data = await res.json();
+            if(data.short_url) { 
+                window.open(data.short_url, '_blank');
+                completeTask(taskName, btnId, bonus);
+            }
         }
 
-        async function buyMiner() {
-            const btn = document.getElementById('btnMiner');
-            btn.innerText = "...";
-            const res = await fetch('/api/buy_miner', { 
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ telegram_id: uid }) 
+        async function completeTask(taskName, btnId, bonus) {
+            const btn = document.getElementById(btnId);
+            const res = await fetch('/api/complete_task', { 
+                method: 'POST', headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ telegram_id: uid, task_name: taskName, bonus: bonus }) 
             });
             const data = await res.json();
             if(data.success) {
                 document.getElementById('score').innerText = data.new_score;
-                btn.innerText = "OWNED"; btn.disabled = true;
-            } else {
-                alert(data.message);
-                btn.innerText = "Acheter";
-            }
+                btn.innerText = "DONE"; btn.disabled = true; btn.style.background = "green";
+            } else { alert(data.message); }
         }
 
-        function completeTask(btnId, bonus) {
-            const btn = document.getElementById(btnId);
-            btn.innerText = "DONE"; btn.disabled = true; btn.style.background = "green";
-            fetch('/api/tap', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegram_id: uid, bonus: bonus }) })
-            .then(r => r.json()).then(d => { document.getElementById('score').innerText = d.new_score; });
+        async function buyMiner() {
+            const res = await fetch('/api/buy_miner', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegram_id: uid }) });
+            const data = await res.json();
+            if(data.success) { document.getElementById('score').innerText = data.new_score; } else { alert(data.message); }
         }
 
         function handleTap() { fetch('/api/tap', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegram_id: uid }) })
