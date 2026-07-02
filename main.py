@@ -1,8 +1,7 @@
 import os
 import psycopg2
-import requests
 from flask import Flask, render_template, request, jsonify
-from datetime import datetime, timedelta
+from datetime import datetime
 
 app = Flask(__name__)
 DATABASE_URL = os.environ.get("DATABASE_URL")
@@ -14,24 +13,13 @@ def init_db():
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS miners INTEGER DEFAULT 0;")
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS user_tasks (
-            user_id VARCHAR(50), task_name VARCHAR(50), last_done TIMESTAMP,
-            PRIMARY KEY (user_id, task_name)
-        );
-    """)
+    cur.execute("CREATE TABLE IF NOT EXISTS user_tasks (user_id VARCHAR(50), task_name VARCHAR(50), PRIMARY KEY (user_id, task_name));")
     conn.commit()
-    cur.close()
-    conn.close()
+    cur.close(); conn.close()
 
 @app.route('/api/shorten', methods=['POST'])
 def shorten_link():
-    data = request.json
-    service = data.get('service')
-    url = data.get('url')
-    api_key = os.environ.get("LINKJUST_API_KEY") if service == 'linkjust' else os.environ.get("EXE_API_KEY")
-    # Logique d'appel API inchangée...
-    return jsonify({"short_url": url}) # Simplifié pour l'exemple
+    return jsonify({"short_url": request.json.get('url')})
 
 @app.route('/api/complete_task', methods=['POST'])
 def complete_task():
@@ -40,7 +28,7 @@ def complete_task():
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("UPDATE users SET points = points + %s WHERE id = %s", (bonus, uid))
-    cur.execute("INSERT INTO user_tasks (user_id, task_name, last_done) VALUES (%s, %s, %s)", (uid, task, datetime.now()))
+    cur.execute("INSERT INTO user_tasks (user_id, task_name) VALUES (%s, %s)", (uid, task))
     conn.commit()
     cur.execute("SELECT points FROM users WHERE id = %s", (uid,))
     score = cur.fetchone()[0]
@@ -66,15 +54,13 @@ def tap():
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("SELECT miners FROM users WHERE id = %s", (uid,))
-    res = cur.fetchone()
-    miners = res[0] if res else 0
-    bonus = 1 + miners
-    cur.execute("UPDATE users SET points = points + %s WHERE id = %s", (bonus, uid))
+    miners = cur.fetchone()[0] if cur.fetchone() else 0
+    cur.execute("UPDATE users SET points = points + %s WHERE id = %s", (1 + miners, uid))
     cur.execute("SELECT points FROM users WHERE id = %s", (uid,))
-    new_score = cur.fetchone()[0]
+    score = cur.fetchone()[0]
     conn.commit()
     cur.close(); conn.close()
-    return jsonify({"new_score": new_score})
+    return jsonify({"new_score": score})
 
 @app.route('/api/score', methods=['GET'])
 def get_score():
