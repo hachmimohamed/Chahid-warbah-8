@@ -6,7 +6,7 @@
     <title>Chahid Warbah</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --gold: #f39c12; --bg: #000; --card: #1e1e1e; --red: #e74c3c; }
+        :root { --gold: #f39c12; --bg: #000; --card: #1e1e1e; }
         body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; text-align: center; height: 100vh; display: flex; flex-direction: column; }
         #score { font-size: 50px; font-weight: bold; color: var(--gold); margin: 20px 0; }
         .page { display: none; flex-grow: 1; padding: 20px; overflow-y: auto; padding-bottom: 100px; }
@@ -27,10 +27,9 @@
     </div>
 
     <div id="tasks-page" class="page">
-        <div class="card"><div>Binance</div><button id="btn1" onclick="startMission('binance', 'btn1', 'URL_BINANCE', 600)">OK</button></div>
-        <div class="card"><div>Bybit</div><button id="btn2" onclick="startMission('bybit', 'btn2', 'URL_BYBIT', 600)">OK</button></div>
-        <div class="card"><div>Linkjust</div><button id="btn3" onclick="startMission('linkjust', 'btn3', 'URL_LINKJUST', 600)">OK</button></div>
-        <div class="card"><div>Exe.io</div><button id="btn4" onclick="startMission('exe_io', 'btn4', 'URL_EXE_IO', 600)">OK</button></div>
+        <div class="card"><div>Binance</div><button id="btn1" onclick="startMission('binance', 'btn1', 'URL', 600)">OK</button></div>
+        <div class="card"><div>Bybit</div><button id="btn2" onclick="startMission('bybit', 'btn2', 'URL', 600)">OK</button></div>
+        <div class="card"><div>Exe.io</div><button id="btn4" onclick="startMission('exe_io', 'btn4', 'URL', 600)">OK</button></div>
     </div>
     
     <nav class="navbar">
@@ -47,23 +46,18 @@
 
         async function startMission(taskName, btnId, url, bonus) {
             const btn = document.getElementById(btnId);
-            const res = await fetch('/api/shorten', { 
-                method: 'POST', headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ service: taskName, url: url }) 
-            });
+            const res = await fetch('/api/shorten', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ service: taskName, url: url }) });
             const data = await res.json();
             if(data.short_url) { 
                 window.open(data.short_url, '_blank');
-                completeTask(taskName, btnId, bonus);
+                btn.innerText = "VÉRIFIER";
+                btn.onclick = () => completeTask(taskName, btnId, bonus);
             }
         }
 
         async function completeTask(taskName, btnId, bonus) {
             const btn = document.getElementById(btnId);
-            const res = await fetch('/api/complete_task', { 
-                method: 'POST', headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ telegram_id: uid, task_name: taskName, bonus: bonus }) 
-            });
+            const res = await fetch('/api/complete_task', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegram_id: uid, task_name: taskName, bonus: bonus }) });
             const data = await res.json();
             if(data.success) {
                 document.getElementById('score').innerText = data.new_score;
@@ -77,8 +71,7 @@
             if(data.success) { document.getElementById('score').innerText = data.new_score; } else { alert(data.message); }
         }
 
-        function handleTap() { fetch('/api/tap', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegram_id: uid }) })
-            .then(r => r.json()).then(d => { document.getElementById('score').innerText = d.new_score; }); }
+        function handleTap() { fetch('/api/tap', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegram_id: uid }) }).then(r => r.json()).then(d => { document.getElementById('score').innerText = d.new_score; }); }
 
         function show(id, btn) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
