@@ -8,6 +8,15 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL, sslmode='require')
 
+def init_db():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # Création des tables nécessaires
+    cur.execute("CREATE TABLE IF NOT EXISTS users (id VARCHAR(50) PRIMARY KEY, points INTEGER DEFAULT 0, miners INTEGER DEFAULT 0);")
+    cur.execute("CREATE TABLE IF NOT EXISTS user_tasks (user_id VARCHAR(50), task_name VARCHAR(50), PRIMARY KEY (user_id, task_name));")
+    conn.commit()
+    cur.close(); conn.close()
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -22,7 +31,8 @@ def complete_task():
     uid, task, bonus = str(data.get('telegram_id')), data.get('task_name'), int(data.get('bonus', 600))
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("UPDATE users SET points = points + %s WHERE id = %s", (bonus, uid))
+    # On tente de mettre à jour ou d'insérer l'utilisateur s'il n'existe pas
+    cur.execute("INSERT INTO users (id, points) VALUES (%s, %s) ON CONFLICT (id) DO UPDATE SET points = users.points + EXCLUDED.points", (uid, bonus))
     cur.execute("INSERT INTO user_tasks (user_id, task_name) VALUES (%s, %s) ON CONFLICT DO NOTHING", (uid, task))
     conn.commit()
     cur.execute("SELECT points FROM users WHERE id = %s", (uid,))
@@ -55,7 +65,8 @@ def tap():
     cur.execute("SELECT miners FROM users WHERE id = %s", (uid,))
     res = cur.fetchone()
     miners = res[0] if res else 0
-    cur.execute("UPDATE users SET points = points + %s WHERE id = %s", (1 + miners, uid))
+    # On assure l'existence de l'utilisateur
+    cur.execute("INSERT INTO users (id, points, miners) VALUES (%s, %s, 0) ON CONFLICT (id) DO UPDATE SET points = users.points + EXCLUDED.points", (uid, 1 + miners))
     cur.execute("SELECT points FROM users WHERE id = %s", (uid,))
     score = cur.fetchone()[0]
     conn.commit()
@@ -69,7 +80,9 @@ def get_score():
     cur = conn.cursor()
     cur.execute("SELECT points FROM users WHERE id = %s", (uid,))
     res = cur.fetchone()
+    cur.close(); conn.close()
     return jsonify({"score": res[0] if res else 0})
 
 if __name__ == '__main__':
+    init_db() # Initialisation au démarrage
     app.run(host='0.0.0.0', port=10000)
